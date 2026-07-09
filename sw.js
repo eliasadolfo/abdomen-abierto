@@ -1,6 +1,6 @@
 // Service Worker — Abdomen Abierto (EduTrauma)
 // Cachea la app para uso offline (útil en pabellón sin señal).
-const CACHE = 'abdomen-abierto-v2';
+const CACHE = 'abdomen-abierto-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -8,7 +8,9 @@ const ASSETS = [
   './icon-192.png',
   './icon-512.png',
   './apple-touch-icon.png',
-  './logo-blanco-trim.png'
+  './logo-blanco-trim.png',
+  './logo-miaa.png',
+  './design/edutrauma-ui.css'
 ];
 
 self.addEventListener('install', (e) => {
