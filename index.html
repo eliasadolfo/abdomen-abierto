@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>¿Dejar el abdomen abierto? — EduTrauma</title>
+<meta name="theme-color" content="#00205C">
+<meta name="description" content="Algoritmo de decisión clínica para dejar el abdomen abierto y grado orientativo de Björck — EduTrauma">
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Abdomen Abierto">
+
+<style>
+  :root{
+    --navy: #00205C;
+    --navy-deep: #121f47;
+    --red: #E02826;
+    --red-soft: #fdecea;
+    --green: #1F7A5C;
+    --green-soft: #e9f6f1;
+    --teal: #16829e;
+    --bg: #eef1f7;
+    --card: #ffffff;
+    --text: #00205C;
+    --muted: #5b6b8c;
+    --line: #dbe1ee;
+    --radius: 18px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(180deg, #eef1f7 0%, #e3e8f3 100%);
+    color: var(--text);
+    display:flex;
+    justify-content:center;
+    min-height:100%;
+  }
+  .app{
+    width:100%;
+    max-width:480px;
+    min-height:100vh;
+    min-height:100dvh;
+    display:flex;
+    flex-direction:column;
+    padding: 0 16px calc(14px + env(safe-area-inset-bottom));
+  }
+
+  /* Brand strip */
+  .brand-strip{
+    margin: 0 -16px 14px;
+    background: var(--navy);
+    color: #fff;
+    padding: 9px 16px;
+    padding-top: calc(9px + env(safe-area-inset-top));
+    padding-left: calc(16px + env(safe-area-inset-left));
+    padding-right: calc(16px + env(safe-area-inset-right));
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+  .brand-logo{ height: 24px; width: auto; display:block; }
+  .brand-strip span.tag{
+    background: var(--red);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+  }
+
+  /* Header */
+  header{ text-align:center; padding: 10px 4px 14px; position:relative;}
+  header h1{
+    font-size: 1.28rem;
+    line-height:1.25;
+    margin: 0 0 6px;
+    font-weight: 800;
+    color: var(--navy);
+    letter-spacing:-0.01em;
+  }
+  header p{
+    margin:0;
+    font-size:0.84rem;
+    color: var(--muted);
+    font-style: italic;
+    line-height:1.4;
+  }
+  .info-btn{
+    position:absolute;
+    top:10px; right:0;
+    width:34px; height:34px;
+    border-radius:50%;
+    border:1.5px solid var(--line);
+    background:#fff;
+    color:var(--navy);
+    font-weight:800;
+    font-size:0.95rem;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+
+  /* Progress */
+  .progress-wrap{ margin: 4px 0 18px; }
+  .progress-track{
+    height:6px; background: #dde3f0; border-radius:6px; overflow:hidden;
+  }
+  .progress-fill{
+    height:100%; background: linear-gradient(90deg, var(--navy), var(--red));
+    border-radius:6px; transition: width .35s ease;
+  }
+  .progress-label{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:0.72rem; color: var(--muted); margin-top:6px; font-weight:600;
+    text-transform:uppercase; letter-spacing:0.04em;
+  }
+
+  /* Category badge */
+  .category-badge{
+    display:inline-flex; align-items:center; gap:8px;
+    background: #e7f4f7; color: var(--teal);
+    border: 1px solid #c9e8ee;
+    padding: 6px 12px 6px 8px;
+    border-radius: 999px;
+    font-size: 0.76rem;
+    font-weight:700;
+    margin-bottom: 14px;
+    letter-spacing:0.02em;
+  }
+  .category-badge.bjorck{
+    background: var(--red-soft); color: var(--red); border-color: #f0c4bd;
+  }
+  .category-badge svg{ width:18px; height:18px; flex-shrink:0; }
+
+  /* Main card area */
+  main{ flex:1; display:flex; flex-direction:column; }
+
+  .card{
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 22px 20px;
+    box-shadow: 0 8px 24px rgba(26,42,94,0.08);
+    border: 1px solid var(--line);
+    flex:1;
+    display:flex;
+    flex-direction:column;
+  }
+
+  .question-text{
+    font-size: 1.18rem;
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--navy);
+    margin: 4px 0 auto;
+  }
+
+  .answers{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 22px;
+  }
+  .answer-btn{
+    padding: 18px 10px;
+    border-radius: 14px;
+    border: 2px solid var(--navy);
+    background: #fff;
+    color: var(--navy);
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    cursor:pointer;
+    transition: transform .08s ease, background .15s ease, color .15s ease;
+  }
+  .answer-btn:active{ transform: scale(0.97); }
+  .answer-btn.yes:active{ background: var(--navy); color:#fff; }
+  .answer-btn.no:active{ background: var(--navy); color:#fff; }
+
+  .back-row{
+    display:flex; justify-content:flex-start; margin-bottom: 10px; min-height: 30px;
+  }
+  .back-btn{
+    background:none; border:none; color: var(--muted);
+    font-size:0.82rem; font-weight:600; cursor:pointer;
+    display:flex; align-items:center; gap:4px; padding:4px 2px;
+  }
+
+  /* Result screen */
+  .result-card{
+    border-radius: var(--radius);
+    padding: 26px 22px 22px;
+    text-align:center;
+    border: 2px solid;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+  }
+  .result-card.open{ background: var(--red-soft); border-color:#f0c4bd; }
+  .result-card.closed{ background: var(--green-soft); border-color:#bfe3d3; }
+  .result-card.bjorck{ background: #fff; border-color: var(--navy); }
+
+  .result-icon{ width:56px; height:56px; margin-bottom: 14px; }
+  .result-eyebrow{
+    font-size:0.74rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+    margin-bottom: 8px;
+  }
+  .result-card.open .result-eyebrow{ color: var(--red); }
+  .result-card.closed .result-eyebrow{ color: var(--green); }
+  .result-card.bjorck .result-eyebrow{ color: var(--navy); }
+
+  .result-title{
+    font-size:1.35rem; font-weight:800; line-height:1.3; margin: 0 0 10px;
+  }
+  .result-card.open .result-title{ color: var(--red); }
+  .result-card.closed .result-title{ color: var(--green); }
+  .result-card.bjorck .result-title{ color: var(--navy); }
+
+  .grade-pill{
+    display:inline-block;
+    background: var(--navy);
+    color:#fff;
+    font-weight:800;
+    font-size: 0.92rem;
+    padding: 6px 16px;
+    border-radius: 999px;
+    margin-bottom: 12px;
+    letter-spacing: 0.02em;
+  }
+
+  .result-detail{
+    font-size:0.92rem; color: var(--text); opacity:0.85; line-height:1.5; max-width: 340px;
+  }
+
+  .trigger-box{
+    margin-top:18px;
+    background: rgba(255,255,255,0.7);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size:0.78rem;
+    color: var(--muted);
+    line-height:1.4;
+    max-width: 360px;
+  }
+  .trigger-box b{ color:var(--text); }
+
+  .caution-box{
+    margin-top: 12px;
+    background: #fff8ec;
+    border: 1px solid #f2dfb3;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.75rem;
+    color: #7a5b13;
+    line-height: 1.45;
+    max-width: 360px;
+  }
+
+  .restart-btn{
+    margin-top: 20px;
+    background: var(--navy);
+    color: #fff;
+    border:none;
+    padding: 14px 26px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor:pointer;
+  }
+  .secondary-btn{
+    margin-top: 12px;
+    background: #fff;
+    color: var(--navy);
+    border: 2px solid var(--navy);
+    padding: 13px 26px;
+    border-radius: 12px;
+    font-size: 0.92rem;
+    font-weight: 700;
+    cursor:pointer;
+  }
+
+  /* Rule panel (modal-ish) */
+  .overlay{
+    position:fixed; inset:0; background: rgba(26,42,94,0.45);
+    display:none; align-items:flex-end; justify-content:center; z-index:20;
+  }
+  .overlay.show{ display:flex; }
+  .sheet{
+    background:#fff; width:100%; max-width:480px;
+    border-radius: 22px 22px 0 0;
+    padding: 22px 20px 30px;
+    padding-bottom: calc(30px + env(safe-area-inset-bottom));
+    animation: slideup .25s ease;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  @keyframes slideup{ from{ transform: translateY(30px); opacity:0;} to{ transform:none; opacity:1;} }
+  .sheet h2{ margin:0 0 14px; font-size:1.05rem; color:var(--navy); }
+  .rule-item{ display:flex; gap:10px; margin-bottom:12px; font-size:0.88rem; line-height:1.45; }
+  .rule-dot{ width:8px; height:8px; border-radius:50%; background:var(--teal); margin-top:7px; flex-shrink:0; }
+  .rule-item b{ color: var(--navy); }
+  .close-sheet{
+    width:100%; margin-top:8px; padding:13px; border-radius:12px;
+    border:1.5px solid var(--line); background:#f7f9fc; color:var(--navy);
+    font-weight:700; font-size:0.9rem; cursor:pointer;
+  }
+
+  footer{
+    text-align:center; font-size:0.68rem; color:var(--muted);
+    padding-top: 16px; line-height:1.4;
+  }
+
+  /* Install banner */
+  .install-banner{
+    display:none;
+    align-items:center;
+    gap: 10px;
+    background: #fff;
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .install-banner.show{ display:flex; }
+  .install-banner button{
+    margin-left:auto;
+    background: var(--navy);
+    color:#fff;
+    border:none;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 0.76rem;
+    font-weight:700;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .install-banner .close-x{
+    background:none; color:var(--muted); padding:8px 4px; margin-left:0;
+    font-size:1rem; line-height:1;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="brand-strip">
+    <img src="logo-blanco-trim.png" alt="EduTrauma" class="brand-logo">
+    <span class="tag">Herramientas clínicas</span>
+  </div>
+
+  <div class="install-banner" id="installBanner">
+    <span id="installText">Instala esta app en tu pantalla de inicio para acceso rápido, incluso sin conexión.</span>
+    <button onclick="promptInstall()">Instalar</button>
+    <button class="close-x" onclick="dismissInstall()" aria-label="Cerrar">✕</button>
+  </div>
+
+  <header>
+    <h1>¿Cuándo dejar el abdomen abierto?</h1>
+    <p>Cerrar siempre que sea seguro; dejar abierto solo si el cierre aumenta el riesgo o impide la estrategia terapéutica.</p>
+    <button class="info-btn" onclick="toggleSheet(true)" aria-label="Ver regla práctica">i</button>
+  </header>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label">
+      <span id="progressText">Pregunta 1 de 6</span>
+      <span id="categoryText"></span>
+    </div>
+  </div>
+
+  <main id="main"></main>
+
+  <footer>Herramienta de apoyo a la decisión clínica — no reemplaza el juicio quirúrgico.<br>EduTrauma® — Enseñando a salvar vidas.</footer>
+</div>
+
+<div class="overlay" id="overlay" onclick="if(event.target===this) toggleSheet(false)">
+  <div class="sheet">
+    <h2>Regla práctica</h2>
+    <div class="rule-item"><div class="rule-dot"></div><div><b>No puedo cerrar:</b> tensión, edema, pérdida de pared</div></div>
+    <div class="rule-item"><div class="rule-dot"></div><div><b>No debo cerrar:</b> fisiología grave / control de daños</div></div>
+    <div class="rule-item"><div class="rule-dot"></div><div><b>Necesito volver:</b> reoperación planificada o second look</div></div>
+    <button class="close-sheet" onclick="toggleSheet(false)">Entendido</button>
+  </div>
+</div>
+
+<script>
+const ICONS = {
+  fisiologico: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l2 6 4-14 2 8h6"/></svg>',
+  anatomico: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M9 3v18M15 3v18"/></svg>',
+  logistico: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 2h6v3H9zM8 10h8M8 14h8M8 18h5"/></svg>',
+  bjorck: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M9 15l6-6"/></svg>'
+};
+
+const QUESTIONS = [
+  {
+    category: "Fisiológico",
+    icon: "fisiologico",
+    text: "¿Se requiere descompresión abdominal o existe hipertensión intraabdominal / riesgo de síndrome compartimental abdominal?",
+    yes: { result:"open", title:"Dejar abdomen abierto + cierre temporal", detail:"La hipertensión intraabdominal o el riesgo de síndrome compartimental contraindica el cierre fascial en este momento." },
+    no: "next"
+  },
+  {
+    category: "Fisiológico",
+    icon: "fisiologico",
+    text: "¿La fisiología permite cirugía definitiva? (Hipotensión, acidosis, coagulopatía, hipotermia, lactato elevado)",
+    yes: "next",
+    no: { result:"open", title:"Control de daños + dejar abdomen abierto", detail:"El paciente no tolera fisiológicamente una cirugía definitiva. Priorizar control de daños y reevaluación posterior." }
+  },
+  {
+    category: "Anatómico",
+    icon: "anatomico",
+    text: "¿El foco hemorrágico o contaminante está completamente controlado?",
+    yes: "next",
+    no: { result:"open", title:"Dejar abdomen abierto (recontrol / control del foco)", detail:"Sin control completo del foco, cerrar impediría un recontrol oportuno." }
+  },
+  {
+    category: "Anatómico",
+    icon: "anatomico",
+    text: "¿La perfusión o viabilidad intestinal es incierta?",
+    yes: { result:"open", title:"Dejar abdomen abierto (second look / reevaluación)", detail:"La viabilidad intestinal incierta requiere una reevaluación programada antes de comprometerse con el cierre." },
+    no: "next"
+  },
+  {
+    category: "Logístico",
+    icon: "logistico",
+    text: "¿Se necesita reoperación planificada? (Packing, second look, anastomosis diferida, reevaluación)",
+    yes: { result:"open", title:"Dejar abdomen abierto (reoperación planificada)", detail:"Hay una estrategia de reoperación planificada que el cierre fascial dificultaría." },
+    no: "next"
+  },
+  {
+    category: "Anatómico",
+    icon: "anatomico",
+    text: "¿La fascia puede cerrarse sin tensión y sin deterioro ventilatorio o hemodinámico?",
+    yes: { result:"closed", title:"Cierre fascial primario", detail:"Todos los criterios fisiológicos, anatómicos y logísticos permiten un cierre seguro y definitivo." },
+    no: { result:"open", title:"Dejar abdomen abierto (edema visceral / cierre inseguro)", detail:"El edema visceral o el riesgo de deterioro ventilatorio/hemodinámico hacen inseguro el cierre en este momento." }
+  }
+];
+
+// Björck sub-flow: only reached when the main flow ends in "open"
+const BJORCK_QUESTIONS = [
+  {
+    key: "frozen",
+    text: '¿El abdomen está "congelado"? (asas y/o fascia completamente fijas entre sí, sin plano de disección seguro, con o sin fístula)',
+    yesGrade: { grade: "Grado 4", label: "Abdomen congelado", detail: "Adherencias firmes y difusas impiden separar de forma segura asas y pared. Puede o no coexistir con fístula entérica." }
+  },
+  {
+    key: "fistula",
+    text: "¿Existe una fístula enteroatmosférica? (comunicación entre la luz intestinal y el ambiente, sin cobertura visceral ni de pared)",
+    yesGrade: { grade: "Grado 3", label: "Fístula enteroatmosférica", detail: "Fístula presente sin la fijación difusa característica del abdomen congelado." }
+  },
+  {
+    key: "fixation",
+    text: "¿Hay fijación en desarrollo del intestino a la pared abdominal o a los canales laterales?"
+  },
+  {
+    key: "contamination",
+    text: "¿La cavidad abdominal está contaminada? (contenido entérico, purulento, o peritonitis significativa)"
+  }
+];
+
+let currentIndex = 0;
+let history = [];
+let bjorckIndex = 0;
+let bjorckAnswers = {};
+let inBjorckFlow = false;
+
+function toggleSheet(show){
+  document.getElementById('overlay').classList.toggle('show', show);
+}
+
+function renderQuestion(){
+  const q = QUESTIONS[currentIndex];
+  const total = QUESTIONS.length;
+  document.getElementById('progressFill').style.width = ((currentIndex)/total*100) + '%';
+  document.getElementById('progressText').textContent = `Pregunta ${currentIndex+1} de ${total}`;
+  document.getElementById('categoryText').textContent = '';
+
+  const main = document.getElementById('main');
+  main.innerHTML = `
+    <div class="back-row">
+      ${history.length ? `<button class="back-btn" onclick="goBack()">‹ Corregir respuesta anterior</button>` : ''}
+    </div>
+    <div class="category-badge">${ICONS[q.icon]}<span>${q.category}</span></div>
+    <div class="card">
+      <div class="question-text">${q.text}</div>
+      <div class="answers">
+        <button class="answer-btn no" onclick="answer('no')">NO</button>
+        <button class="answer-btn yes" onclick="answer('yes')">SÍ</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderResult(result){
+  document.getElementById('progressFill').style.width = '100%';
+  document.getElementById('progressText').textContent = 'Resultado';
+  document.getElementById('categoryText').textContent = '';
+
+  const iconOpen = '<svg class="result-icon" viewBox="0 0 24 24" fill="none" stroke="#E02826" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 9l6 6M15 9l-6 6"/></svg>';
+  const iconClosed = '<svg class="result-icon" viewBox="0 0 24 24" fill="none" stroke="#1F7A5C" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>';
+
+  const isOpen = result.result === 'open';
+  const triggerLine = history[history.length-1];
+  const triggeringQuestion = QUESTIONS[triggerLine.index];
+
+  const main = document.getElementById('main');
+  main.innerHTML = `
+    <div class="back-row">
+      <button class="back-btn" onclick="goBack()">‹ Corregir última respuesta</button>
+    </div>
+    <div class="result-card ${isOpen ? 'open' : 'closed'}">
+      ${isOpen ? iconOpen : iconClosed}
+      <div class="result-eyebrow">Recomendación</div>
+      <div class="result-title">${result.title}</div>
+      <div class="result-detail">${result.detail}</div>
+      <div class="trigger-box">Determinado por: <b>${triggeringQuestion.category}</b> — "${triggeringQuestion.text}" → respuesta: <b>${triggerLine.answer.toUpperCase()}</b></div>
+    </div>
+    ${isOpen ? `<button class="secondary-btn" onclick="startBjorck()">Ver grado orientativo de Björck ›</button>` : ''}
+    <button class="restart-btn" onclick="restart()">Evaluar otro caso</button>
+  `;
+}
+
+function startBjorck(){
+  inBjorckFlow = true;
+  bjorckIndex = 0;
+  bjorckAnswers = {};
+  renderBjorckQuestion();
+}
+
+function renderBjorckQuestion(){
+  const q = BJORCK_QUESTIONS[bjorckIndex];
+  const total = BJORCK_QUESTIONS.length;
+  document.getElementById('progressFill').style.width = ((bjorckIndex)/total*100) + '%';
+  document.getElementById('progressText').textContent = `Björck · Pregunta ${bjorckIndex+1} de ${total}`;
+  document.getElementById('categoryText').textContent = '';
+
+  const main = document.getElementById('main');
+  main.innerHTML = `
+    <div class="back-row">
+      <button class="back-btn" onclick="bjorckBack()">‹ ${bjorckIndex===0 ? 'Volver a la recomendación' : 'Corregir respuesta anterior'}</button>
+    </div>
+    <div class="category-badge bjorck">${ICONS.bjorck}<span>Grado de Björck (orientativo)</span></div>
+    <div class="card">
+      <div class="question-text">${q.text}</div>
+      <div class="answers">
+        <button class="answer-btn no" onclick="bjorckAnswer('no')">NO</button>
+        <button class="answer-btn yes" onclick="bjorckAnswer('yes')">SÍ</button>
+      </div>
+    </div>
+  `;
+}
+
+function bjorckAnswer(ans){
+  const q = BJORCK_QUESTIONS[bjorckIndex];
+  bjorckAnswers[q.key] = ans;
+
+  if (q.yesGrade && ans === 'yes'){
+    renderBjorckResult(q.yesGrade);
+    return;
+  }
+
+  if (bjorckIndex < BJORCK_QUESTIONS.length - 1){
+    bjorckIndex++;
+    renderBjorckQuestion();
+  } else {
+    // Reached the end: combine fixation + contamination
+    const fixation = bjorckAnswers.fixation === 'yes';
+    const contamination = bjorckAnswers.contamination === 'yes';
+    let grade;
+    if (!fixation && !contamination) grade = { grade:"Grado 1A", label:"Limpio, sin fijación", detail:"Cavidad limpia y sin adherencias tempranas de asas a la pared." };
+    else if (!fixation && contamination) grade = { grade:"Grado 1B", label:"Contaminado, sin fijación", detail:"Contaminación entérica o purulenta, pero sin adherencias tempranas de asas a la pared." };
+    else if (fixation && !contamination) grade = { grade:"Grado 2A", label:"Limpio, con fijación en desarrollo", detail:"Cavidad limpia, con adherencias tempranas de asas a la pared o canales laterales." };
+    else grade = { grade:"Grado 2B", label:"Contaminado, con fijación en desarrollo", detail:"Contaminación presente junto con adherencias tempranas de asas a la pared o canales laterales." };
+    renderBjorckResult(grade);
+  }
+}
+
+function bjorckBack(){
+  if (bjorckIndex === 0){
+    inBjorckFlow = false;
+    const last = history[history.length-1];
+    renderResult(last.outcome);
+    document.getElementById('progressFill').style.width = '100%';
+    document.getElementById('progressText').textContent = 'Resultado';
+    return;
+  }
+  bjorckIndex--;
+  renderBjorckQuestion();
+}
+
+function renderBjorckResult(grade){
+  document.getElementById('progressFill').style.width = '100%';
+  document.getElementById('progressText').textContent = 'Grado de Björck';
+  document.getElementById('categoryText').textContent = '';
+
+  const main = document.getElementById('main');
+  main.innerHTML = `
+    <div class="back-row">
+      <button class="back-btn" onclick="startBjorck()">‹ Rehacer clasificación de Björck</button>
+    </div>
+    <div class="result-card bjorck">
+      <div class="result-eyebrow">Grado orientativo de Björck</div>
+      <div class="grade-pill">${grade.grade}</div>
+      <div class="result-title" style="font-size:1.05rem;">${grade.label}</div>
+      <div class="result-detail">${grade.detail}</div>
+      <div class="caution-box">Grado orientativo según hallazgos referidos. La clasificación definitiva —especialmente en el límite entre grados 2 y 3— requiere inspección directa y puede tener variabilidad interobservador; confirmar en pabellón.</div>
+    </div>
+    <button class="restart-btn" onclick="restart()">Evaluar otro caso</button>
+  `;
+}
+
+function answer(ans){
+  const q = QUESTIONS[currentIndex];
+  const outcome = q[ans];
+  history.push({ index: currentIndex, answer: ans, outcome: outcome !== 'next' ? outcome : null });
+
+  if (outcome === 'next'){
+    currentIndex++;
+    renderQuestion();
+  } else {
+    renderResult(outcome);
+  }
+}
+
+function goBack(){
+  if (inBjorckFlow){ inBjorckFlow = false; }
+  if (history.length === 0) return;
+  const last = history.pop();
+  currentIndex = last.index;
+  renderQuestion();
+}
+
+function restart(){
+  currentIndex = 0;
+  history = [];
+  inBjorckFlow = false;
+  bjorckIndex = 0;
+  bjorckAnswers = {};
+  renderQuestion();
+}
+
+renderQuestion();
+
+// --- PWA install prompt handling (Android/desktop Chrome) ---
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (localStorage.getItem('installDismissed') !== '1'){
+    document.getElementById('installBanner').classList.add('show');
+  }
+});
+function promptInstall(){
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.finally(() => {
+    deferredPrompt = null;
+    document.getElementById('installBanner').classList.remove('show');
+  });
+}
+function dismissInstall(){
+  localStorage.setItem('installDismissed', '1');
+  document.getElementById('installBanner').classList.remove('show');
+}
+window.addEventListener('appinstalled', () => {
+  document.getElementById('installBanner').classList.remove('show');
+});
+
+// --- iOS "Add to Home Screen" hint (beforeinstallprompt no existe en Safari iOS) ---
+(function(){
+  const ua = window.navigator.userAgent;
+  const isIOS = /iPhone|iPad|iPod/.test(ua);
+  const isStandalone = ('standalone' in window.navigator) && window.navigator.standalone;
+  if (isIOS && !isStandalone && localStorage.getItem('installDismissed') !== '1'){
+    const banner = document.getElementById('installBanner');
+    document.getElementById('installText').innerHTML =
+      'Para instalar: toca <b>Compartir</b> ⬆️ y luego <b>“Agregar a inicio”</b>.';
+    banner.querySelector('button').style.display = 'none';
+    banner.classList.add('show');
+  }
+})();
+
+// --- Service worker registration (no-op on file://, needed when hosted) ---
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
