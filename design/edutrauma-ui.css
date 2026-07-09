@@ -9,6 +9,7 @@
 :root{
   /* Marca (del manual EduTrauma, AF_Logo Edu_Trauma.ai) */
   --et-navy: #00205C;        /* Pantone 281c — color primario */
+  --et-navy-deep: #001845;   /* variante profunda (cinta de ecosistema) */
   --et-red: #E02826;         /* Pantone 485c — acento de marca */
 
   /* Semánticos (resultados clínicos) */
@@ -87,7 +88,7 @@ main{ flex:1; display:flex; flex-direction:column; }
 /* ---------- 3. HEADER DE MARCA (doble logo) ----------
    EduTrauma a la izquierda, logo de curso/programa a la derecha. */
 .brand-strip{
-  margin: 0 -16px 14px;
+  margin: 0 -16px 0;
   background: var(--et-navy);
   padding: 8px 16px;
   padding-top: calc(8px + env(safe-area-inset-top));
@@ -109,6 +110,22 @@ main{ flex:1; display:flex; flex-direction:column; }
   flex-shrink:0;
 }
 .brand-chip img{ height: 30px; width:auto; display:block; }
+/* Cinta de ecosistema: "HERRAMIENTAS CLÍNICAS" — idéntica en todas las apps.
+   El filete rojo superior evoca la línea divisoria del logo EduTrauma. */
+.brand-ribbon{
+  margin: 0 -16px 14px;
+  background: var(--et-navy-deep);
+  border-top: 2px solid var(--et-red);
+  color: rgba(255,255,255,0.78);
+  text-align:center;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  padding: 5px 16px 6px;
+  padding-left: calc(16px + env(safe-area-inset-left));
+  padding-right: calc(16px + env(safe-area-inset-right));
+}
 
 /* ---------- 4. CABECERA DE PÁGINA ---------- */
 header{ text-align:center; padding: 10px 4px 8px; }
