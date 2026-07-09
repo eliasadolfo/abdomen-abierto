@@ -36,10 +36,6 @@
   <header>
     <h1>¿Cuándo dejar el abdomen abierto?</h1>
     <p>Cerrar siempre que sea seguro; dejar abierto solo si el cierre aumenta el riesgo o impide la estrategia terapéutica.</p>
-    <button class="rule-link" onclick="toggleSheet(true)" aria-label="Ver regla práctica">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="9.25"/><path d="M12 11v5.2"/><circle cx="12" cy="7.6" r="0.5" fill="currentColor" stroke="none"/><circle cx="12" cy="7.6" r="0.9" fill="currentColor" stroke="none"/></svg>
-      Regla práctica
-    </button>
   </header>
 
   <div class="progress-wrap" id="progressWrap">
@@ -53,16 +49,6 @@
   <main id="main"></main>
 
   <footer>Herramienta de apoyo a la decisión clínica — no reemplaza el juicio quirúrgico.<br>EduTrauma® — Enseñando a salvar vidas.</footer>
-</div>
-
-<div class="overlay" id="overlay" onclick="if(event.target===this) toggleSheet(false)">
-  <div class="sheet">
-    <h2>Regla práctica</h2>
-    <div class="rule-item"><div class="rule-dot"></div><div><b>No puedo cerrar:</b> tensión, edema, pérdida de pared</div></div>
-    <div class="rule-item"><div class="rule-dot"></div><div><b>No debo cerrar:</b> fisiología grave / control de daños</div></div>
-    <div class="rule-item"><div class="rule-dot"></div><div><b>Necesito volver:</b> reoperación planificada o second look</div></div>
-    <button class="close-sheet" onclick="toggleSheet(false)">Entendido</button>
-  </div>
 </div>
 
 <script>
@@ -146,11 +132,39 @@ let bjorckIndex = 0;
 let bjorckAnswers = {};
 let inBjorckFlow = false;
 
-function toggleSheet(show){
-  document.getElementById('overlay').classList.toggle('show', show);
+// Modo flujo: compacta la cabecera para que cada pantalla quepa sin scroll
+function setFlow(on){
+  document.querySelector('.app').classList.toggle('in-flow', on);
+  document.getElementById('progressWrap').style.display = on ? '' : 'none';
+  window.scrollTo(0, 0);
+}
+
+function renderStart(){
+  setFlow(false);
+  const main = document.getElementById('main');
+  main.innerHTML = `
+    <div class="start-rules">
+      <h2>Regla práctica</h2>
+      <div class="rule-item"><div class="rule-dot"></div><div><b>No puedo cerrar:</b> tensión, edema, pérdida de pared</div></div>
+      <div class="rule-item"><div class="rule-dot"></div><div><b>No debo cerrar:</b> fisiología grave / control de daños</div></div>
+      <div class="rule-item"><div class="rule-dot"></div><div><b>Necesito volver:</b> reoperación planificada o second look</div></div>
+    </div>
+    <button class="start-btn" onclick="startFlow()">Comenzar evaluación ›</button>
+  `;
+}
+
+function startFlow(){
+  currentIndex = 0;
+  history = [];
+  inBjorckFlow = false;
+  bjorckIndex = 0;
+  bjorckAnswers = {};
+  setFlow(true);
+  renderQuestion();
 }
 
 function renderQuestion(){
+  setFlow(true);
   const q = QUESTIONS[currentIndex];
   const total = QUESTIONS.length;
   document.getElementById('progressFill').style.width = ((currentIndex)/total*100) + '%';
@@ -174,6 +188,7 @@ function renderQuestion(){
 }
 
 function renderResult(result){
+  window.scrollTo(0, 0);
   document.getElementById('progressFill').style.width = '100%';
   document.getElementById('progressText').textContent = 'Resultado';
   document.getElementById('categoryText').textContent = '';
@@ -195,7 +210,10 @@ function renderResult(result){
       <div class="result-eyebrow">Recomendación</div>
       <div class="result-title">${result.title}</div>
       <div class="result-detail">${result.detail}</div>
-      <div class="trigger-box">Determinado por: <b>${triggeringQuestion.category}</b> — "${triggeringQuestion.text}" → respuesta: <b>${triggerLine.answer.toUpperCase()}</b></div>
+      <details class="trigger-details">
+        <summary>¿Qué lo determinó?</summary>
+        <div class="trigger-box"><b>${triggeringQuestion.category}</b> — "${triggeringQuestion.text}" → respuesta: <b>${triggerLine.answer.toUpperCase()}</b></div>
+      </details>
     </div>
     ${isOpen ? `<button class="secondary-btn" onclick="startBjorck()">Ver grado orientativo de Björck ›</button>` : ''}
     <button class="restart-btn" onclick="restart()">Evaluar otro caso</button>
@@ -210,6 +228,7 @@ function startBjorck(){
 }
 
 function renderBjorckQuestion(){
+  window.scrollTo(0, 0);
   const q = BJORCK_QUESTIONS[bjorckIndex];
   const total = BJORCK_QUESTIONS.length;
   document.getElementById('progressFill').style.width = ((bjorckIndex)/total*100) + '%';
@@ -271,6 +290,7 @@ function bjorckBack(){
 }
 
 function renderBjorckResult(grade){
+  window.scrollTo(0, 0);
   document.getElementById('progressFill').style.width = '100%';
   document.getElementById('progressText').textContent = 'Grado de Björck';
   document.getElementById('categoryText').textContent = '';
@@ -318,10 +338,10 @@ function restart(){
   inBjorckFlow = false;
   bjorckIndex = 0;
   bjorckAnswers = {};
-  renderQuestion();
+  renderStart();
 }
 
-renderQuestion();
+renderStart();
 
 // --- PWA install prompt handling (Android/desktop Chrome) ---
 let deferredPrompt;

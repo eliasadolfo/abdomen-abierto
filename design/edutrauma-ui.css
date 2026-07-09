@@ -169,6 +169,72 @@ header p{
 .rule-link:active{ opacity:0.55; background: rgba(22,130,158,0.08); }
 .rule-link svg{ width:17px; height:17px; flex-shrink:0; }
 
+/* ---------- 4b. PANTALLA DE INICIO Y MODO FLUJO ----------
+   Inicio: reglas visibles + botón grande "Comenzar".
+   En flujo (.app.in-flow): se oculta la cabecera para que la
+   pregunta y los botones quepan SIN scroll. */
+.app.in-flow header{ display:none; }
+
+.start-rules{
+  background: var(--et-card);
+  border: 1px solid var(--et-line);
+  border-radius: var(--et-radius-lg);
+  box-shadow: var(--et-shadow);
+  padding: 18px 18px 10px;
+  text-align:left;
+  margin-top: 6px;
+}
+.start-rules h2{
+  margin:0 0 12px;
+  font-size:0.76rem;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color: var(--et-muted);
+  font-weight:700;
+  text-align:center;
+}
+.start-btn{
+  margin-top: 18px;
+  width:100%;
+  background: var(--et-navy);
+  color:#fff;
+  border:none;
+  padding: 19px;
+  border-radius: var(--et-radius-md);
+  font-family:inherit;
+  font-size: 1.12rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  cursor:pointer;
+  transition: transform .08s ease;
+}
+.start-btn:active{ transform: scale(0.98); }
+
+/* Trazabilidad plegable en el resultado */
+.trigger-details{
+  margin-top: 16px;
+  max-width: 360px;
+  width:100%;
+}
+.trigger-details summary{
+  list-style:none;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--et-muted);
+  padding: 8px 14px;
+  border-radius: var(--et-radius-pill);
+  -webkit-user-select:none;
+  user-select:none;
+}
+.trigger-details summary::-webkit-details-marker{ display:none; }
+.trigger-details summary::after{ content:"›"; transform: rotate(90deg); transition: transform .15s ease; font-size:1rem; }
+.trigger-details[open] summary::after{ transform: rotate(-90deg); }
+.trigger-details .trigger-box{ margin-top: 8px; }
+
 /* ---------- 5. PROGRESO ---------- */
 .progress-wrap{ margin: 4px 0 18px; }
 .progress-track{
