@@ -177,27 +177,55 @@ header p{
    pregunta y los botones quepan SIN scroll. */
 .app.in-flow header{ display:none; }
 
-/* Selector de idioma — discreto, al pie de la pantalla de inicio.
-   El idioma se autodetecta; esto es solo el ajuste manual ocasional. */
-.lang-switch{
+/* Curva de resorte de la casa (rebote sutil, estilo TEM/Apple) */
+:root{ --et-spring: cubic-bezier(0.34, 1.6, 0.55, 1); }
+
+/* Selector de idioma — barra segmentada semi-translúcida con thumb
+   deslizante (rebote de resorte). Al pie de la pantalla de inicio. */
+.lang-wrap{
   display:flex;
   align-items:center;
   justify-content:center;
-  gap: 2px;
+  gap: 10px;
   margin-top: auto;      /* se apoya al fondo del main, sobre el footer */
   padding-top: 24px;
 }
-.lang-switch svg{
+.lang-wrap > svg{
   width:16px; height:16px;
   color: var(--et-muted);
   opacity:0.7;
-  margin-right: 6px;
   flex-shrink:0;
 }
+.lang-switch{
+  position:relative;
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: min(320px, 100%);
+  padding: 4px;
+  border-radius: var(--et-radius-pill);
+  background: rgba(255,255,255,0.55);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(219,225,238,0.9);
+  box-shadow: inset 0 1px 2px rgba(0,32,92,0.04);
+}
+.lang-thumb{
+  position:absolute;
+  top:4px; bottom:4px; left:4px;
+  width: calc((100% - 8px) / 3);
+  border-radius: var(--et-radius-pill);
+  background: var(--et-navy);
+  box-shadow: 0 2px 8px rgba(0,32,92,0.28);
+  transition: transform .42s var(--et-spring);
+}
+.lang-switch[data-active="1"] .lang-thumb{ transform: translateX(100%); }
+.lang-switch[data-active="2"] .lang-thumb{ transform: translateX(200%); }
 .lang-switch button{
+  position:relative;
+  z-index:1;
   border:none;
   background:none;
-  padding: 12px 13px;
+  padding: 12px 6px;
   min-height: 44px;
   border-radius: var(--et-radius-pill);
   font-family:inherit;
@@ -205,10 +233,9 @@ header p{
   font-weight: 600;
   color: var(--et-muted);
   cursor:pointer;
-  transition: background .15s ease, color .15s ease;
+  transition: color .25s ease;
 }
 .lang-switch button.active{
-  background: var(--et-navy);
   color:#fff;
   font-weight:700;
 }
@@ -561,4 +588,25 @@ footer{
   text-align:center; font-size: var(--et-fs-micro);
   color: var(--et-muted);
   padding-top: 16px; line-height:1.4;
+}
+
+/* ---------- 14. MICROINTERACCIONES — rebote de resorte (estilo TEM) ----------
+   Presión: encoge rápido. Soltar: vuelve con un pequeño overshoot (rebote).
+   La curva --et-spring genera el rebote sin JavaScript. */
+.start-btn, .answer-btn, .restart-btn, .secondary-btn, .trigger-details summary, .close-sheet{
+  transition: transform .38s var(--et-spring), background .15s ease, color .15s ease, opacity .15s ease;
+  will-change: transform;
+}
+.start-btn:active, .answer-btn:active, .restart-btn:active, .secondary-btn:active,
+.trigger-details summary:active, .close-sheet:active{
+  transform: scale(0.94);
+  transition-duration: .08s;
+}
+
+@media (prefers-reduced-motion: reduce){
+  .lang-thumb,
+  .start-btn, .answer-btn, .restart-btn, .secondary-btn,
+  .trigger-details summary, .close-sheet{
+    transition: none;
+  }
 }

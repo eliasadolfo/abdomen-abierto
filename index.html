@@ -314,11 +314,34 @@ function detectLang(){
 let LANG = detectLang();
 function T(){ return I18N[LANG]; }
 
+const LANGS = ['es', 'en', 'pt'];
+
 function setLang(lang){
   LANG = lang;
   localStorage.setItem('lang', lang);
   applyStaticTexts();
-  renderStart();
+
+  // Si estamos en la pantalla de inicio, actualizar en sitio para que
+  // el thumb DESLICE (un re-render mataría la animación).
+  const sw = document.getElementById('langSwitch');
+  if (sw){
+    sw.dataset.active = LANGS.indexOf(lang);
+    sw.querySelectorAll('button').forEach((b, i) => {
+      b.classList.toggle('active', LANGS[i] === lang);
+      b.setAttribute('aria-pressed', LANGS[i] === lang);
+    });
+    const t = T();
+    document.getElementById('startRules').innerHTML = startRulesHTML(t);
+    document.getElementById('startBtn').textContent = t.startBtn;
+  } else {
+    renderStart();
+  }
+}
+
+function startRulesHTML(t){
+  return `<h2>${t.rulesHeading}</h2>` + t.rules.map(r =>
+    `<div class="rule-item"><div class="rule-dot"></div><div><b>${r[0]}</b> ${r[1]}</div></div>`
+  ).join('');
 }
 
 function applyStaticTexts(){
@@ -350,21 +373,21 @@ function setFlow(on){
 function renderStart(){
   setFlow(false);
   const t = T();
-  const langBtns = Object.keys(I18N).map(l =>
+  const langBtns = LANGS.map(l =>
     `<button class="${l === LANG ? 'active' : ''}" onclick="setLang('${l}')" aria-pressed="${l === LANG}">${LANG_NAMES[l]}</button>`
-  ).join('');
-  const rules = t.rules.map(r =>
-    `<div class="rule-item"><div class="rule-dot"></div><div><b>${r[0]}</b> ${r[1]}</div></div>`
   ).join('');
   const globe = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.7 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.7-3.8-9s1.3-6.4 3.8-9z"/></svg>';
   const main = document.getElementById('main');
   main.innerHTML = `
-    <div class="start-rules">
-      <h2>${t.rulesHeading}</h2>
-      ${rules}
+    <div class="start-rules" id="startRules">${startRulesHTML(t)}</div>
+    <button class="start-btn" id="startBtn" onclick="startFlow()">${t.startBtn}</button>
+    <div class="lang-wrap">
+      ${globe}
+      <div class="lang-switch" id="langSwitch" role="group" aria-label="Idioma / Language" data-active="${LANGS.indexOf(LANG)}">
+        <div class="lang-thumb"></div>
+        ${langBtns}
+      </div>
     </div>
-    <button class="start-btn" onclick="startFlow()">${t.startBtn}</button>
-    <div class="lang-switch" role="group" aria-label="Idioma / Language">${globe}${langBtns}</div>
   `;
 }
 
