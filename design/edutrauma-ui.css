@@ -610,3 +610,54 @@ footer{
     transition: none;
   }
 }
+
+/* ---------- 15. COREOGRAFÍA DE ENTRADA (lenguaje TEM Motions) ----------
+   Cada pantalla "llega" en secuencia: tarjeta hace pop con resorte,
+   los ítems entran en cascada, las acciones suben al final.
+   Nota: los botones con press-scale se animan vía WRAPPER (.anim-pop)
+   para que la animación no bloquee el transform del :active. */
+@keyframes et-pop-in{
+  from{ opacity:0; transform: scale(0.92) translateY(16px); }
+  to{   opacity:1; transform: none; }
+}
+@keyframes et-rise-in{
+  from{ opacity:0; transform: translateY(12px); }
+  to{   opacity:1; transform: none; }
+}
+@keyframes et-slide-in{
+  from{ opacity:0; transform: translateX(-12px); }
+  to{   opacity:1; transform: none; }
+}
+
+/* Pregunta */
+.category-badge{ animation: et-rise-in .4s ease both; }
+.card{ animation: et-pop-in .55s var(--et-spring) both .06s; }
+.card .answers{ animation: et-rise-in .45s ease both .22s; }
+
+/* Inicio */
+.start-rules{ animation: et-pop-in .55s var(--et-spring) both; }
+.start-rules .rule-item{ animation: et-slide-in .4s ease both; }
+.start-rules .rule-item:nth-child(2){ animation-delay: .16s; }
+.start-rules .rule-item:nth-child(3){ animation-delay: .26s; }
+.start-rules .rule-item:nth-child(4){ animation-delay: .36s; }
+.lang-wrap{ animation: et-rise-in .5s ease both .5s; }
+
+/* Resultado */
+.result-card{ animation: et-pop-in .55s var(--et-spring) both; }
+.result-icon{ animation: et-pop-in .5s var(--et-spring) both .12s; }
+.grade-pill{ animation: et-pop-in .5s var(--et-spring) both .12s; }
+.trigger-details, .caution-box{ animation: et-rise-in .45s ease both .3s; }
+
+/* Wrapper para animar botones sin pisar su press-scale */
+.anim-pop{ animation: et-rise-in .45s ease both .34s; }
+.anim-pop + .anim-pop{ animation-delay: .44s; }
+
+@media (prefers-reduced-motion: reduce){
+  .category-badge, .card, .card .answers,
+  .start-rules, .start-rules .rule-item, .lang-wrap,
+  .result-card, .result-icon, .grade-pill,
+  .trigger-details, .caution-box, .anim-pop{
+    animation: none;
+  }
+}
+.anim-pop > button{ width:100%; }

@@ -380,7 +380,7 @@ function renderStart(){
   const main = document.getElementById('main');
   main.innerHTML = `
     <div class="start-rules" id="startRules">${startRulesHTML(t)}</div>
-    <button class="start-btn" id="startBtn" onclick="startFlow()">${t.startBtn}</button>
+    <div class="anim-pop"><button class="start-btn" id="startBtn" onclick="startFlow()">${t.startBtn}</button></div>
     <div class="lang-wrap">
       ${globe}
       <div class="lang-switch" id="langSwitch" role="group" aria-label="Idioma / Language" data-active="${LANGS.indexOf(LANG)}">
@@ -455,8 +455,8 @@ function renderResult(result){
         <div class="trigger-box"><b>${triggeringQuestion.category}</b> — "${triggeringQuestion.text}" → ${t.triggerAnswer}: <b>${triggerLine.answer === 'yes' ? t.yes : t.no}</b></div>
       </details>
     </div>
-    ${isOpen ? `<button class="secondary-btn" onclick="startBjorck()">${t.bjorckBtn}</button>` : ''}
-    <button class="restart-btn" onclick="restart()">${t.restartBtn}</button>
+    ${isOpen ? `<div class="anim-pop"><button class="secondary-btn" onclick="startBjorck()">${t.bjorckBtn}</button></div>` : ''}
+    <div class="anim-pop"><button class="restart-btn" onclick="restart()">${t.restartBtn}</button></div>
   `;
 }
 
@@ -548,7 +548,7 @@ function renderBjorckResult(grade){
       <div class="result-detail">${grade.detail}</div>
       <div class="caution-box">${t.caution}</div>
     </div>
-    <button class="restart-btn" onclick="restart()">${t.restartBtn}</button>
+    <div class="anim-pop"><button class="restart-btn" onclick="restart()">${t.restartBtn}</button></div>
   `;
 }
 
