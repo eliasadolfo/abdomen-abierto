@@ -211,8 +211,8 @@ function renderResult(result){
       <div class="result-title">${result.title}</div>
       <div class="result-detail">${result.detail}</div>
       <details class="trigger-details">
-        <summary>¿Qué lo determinó?</summary>
-        <div class="trigger-box"><b>${triggeringQuestion.category}</b> — "${triggeringQuestion.text}" → respuesta: <b>${triggerLine.answer.toUpperCase()}</b></div>
+        <summary><span class="label-closed">Ver qué lo determinó</span><span class="label-open">Ocultar detalle</span></summary>
+        <div class="trigger-box"><b>${triggeringQuestion.category}</b> — "${triggeringQuestion.text}" → respuesta: <b>${triggerLine.answer === 'yes' ? 'SÍ' : 'NO'}</b></div>
       </details>
     </div>
     ${isOpen ? `<button class="secondary-btn" onclick="startBjorck()">Ver grado orientativo de Björck ›</button>` : ''}
