@@ -25,30 +25,30 @@
     <img src="logo-blanco-trim.png" alt="EduTrauma" class="brand-logo">
     <span class="brand-chip"><img src="logo-miaa.png" alt="Curso MIAA — Manejo Integral del Abdomen Abierto"></span>
   </div>
-  <div class="brand-ribbon">Herramientas Clínicas</div>
+  <div class="brand-ribbon" id="brandRibbon">Herramientas Clínicas</div>
 
   <div class="install-banner" id="installBanner">
-    <span id="installText">Instala esta app en tu pantalla de inicio para acceso rápido, incluso sin conexión.</span>
-    <button onclick="promptInstall()">Instalar</button>
+    <span id="installText"></span>
+    <button id="installBtn" onclick="promptInstall()"></button>
     <button class="close-x" onclick="dismissInstall()" aria-label="Cerrar">✕</button>
   </div>
 
   <header>
-    <h1>¿Cuándo dejar el abdomen abierto?</h1>
-    <p>Cerrar siempre que sea seguro; dejar abierto solo si el cierre aumenta el riesgo o impide la estrategia terapéutica.</p>
+    <h1 id="appTitle"></h1>
+    <p id="appSubtitle"></p>
   </header>
 
   <div class="progress-wrap" id="progressWrap">
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
     <div class="progress-label">
-      <span id="progressText">Pregunta 1 de 6</span>
+      <span id="progressText"></span>
       <span id="categoryText"></span>
     </div>
   </div>
 
   <main id="main"></main>
 
-  <footer>Herramienta de apoyo a la decisión clínica — no reemplaza el juicio quirúrgico.<br>EduTrauma® — Enseñando a salvar vidas.</footer>
+  <footer id="appFooter"></footer>
 </div>
 
 <script>
@@ -59,73 +59,281 @@ const ICONS = {
   bjorck: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M9 15l6-6"/></svg>'
 };
 
-const QUESTIONS = [
-  {
-    category: "Fisiológico",
-    icon: "fisiologico",
-    text: "¿Se requiere descompresión abdominal o existe hipertensión intraabdominal / riesgo de síndrome compartimental abdominal?",
-    yes: { result:"open", title:"Dejar abdomen abierto + cierre temporal", detail:"La hipertensión intraabdominal o el riesgo de síndrome compartimental contraindica el cierre fascial en este momento." },
-    no: "next"
-  },
-  {
-    category: "Fisiológico",
-    icon: "fisiologico",
-    text: "¿La fisiología permite cirugía definitiva? (Hipotensión, acidosis, coagulopatía, hipotermia, lactato elevado)",
-    yes: "next",
-    no: { result:"open", title:"Control de daños + dejar abdomen abierto", detail:"El paciente no tolera fisiológicamente una cirugía definitiva. Priorizar control de daños y reevaluación posterior." }
-  },
-  {
-    category: "Anatómico",
-    icon: "anatomico",
-    text: "¿El foco hemorrágico o contaminante está completamente controlado?",
-    yes: "next",
-    no: { result:"open", title:"Dejar abdomen abierto (recontrol / control del foco)", detail:"Sin control completo del foco, cerrar impediría un recontrol oportuno." }
-  },
-  {
-    category: "Anatómico",
-    icon: "anatomico",
-    text: "¿La perfusión o viabilidad intestinal es incierta?",
-    yes: { result:"open", title:"Dejar abdomen abierto (second look / reevaluación)", detail:"La viabilidad intestinal incierta requiere una reevaluación programada antes de comprometerse con el cierre." },
-    no: "next"
-  },
-  {
-    category: "Logístico",
-    icon: "logistico",
-    text: "¿Se necesita reoperación planificada? (Packing, second look, anastomosis diferida, reevaluación)",
-    yes: { result:"open", title:"Dejar abdomen abierto (reoperación planificada)", detail:"Hay una estrategia de reoperación planificada que el cierre fascial dificultaría." },
-    no: "next"
-  },
-  {
-    category: "Anatómico",
-    icon: "anatomico",
-    text: "¿La fascia puede cerrarse sin tensión y sin deterioro ventilatorio o hemodinámico?",
-    yes: { result:"closed", title:"Cierre fascial primario", detail:"Todos los criterios fisiológicos, anatómicos y logísticos permiten un cierre seguro y definitivo." },
-    no: { result:"open", title:"Dejar abdomen abierto (edema visceral / cierre inseguro)", detail:"El edema visceral o el riesgo de deterioro ventilatorio/hemodinámico hacen inseguro el cierre en este momento." }
-  }
-];
+/* ============ i18n ============ */
+const I18N = {
 
-// Björck sub-flow: only reached when the main flow ends in "open"
-const BJORCK_QUESTIONS = [
-  {
-    key: "frozen",
-    text: '¿El abdomen está "congelado"? (asas y/o fascia completamente fijas entre sí, sin plano de disección seguro, con o sin fístula)',
-    yesGrade: { grade: "Grado 4", label: "Abdomen congelado", detail: "Adherencias firmes y difusas impiden separar de forma segura asas y pared. Puede o no coexistir con fístula entérica." }
+  es: {
+    htmlLang: "es",
+    docTitle: "¿Dejar el abdomen abierto? — EduTrauma",
+    ribbon: "Herramientas Clínicas",
+    title: "¿Cuándo dejar el abdomen abierto?",
+    subtitle: "Cerrar siempre que sea seguro; dejar abierto solo si el cierre aumenta el riesgo o impide la estrategia terapéutica.",
+    rulesHeading: "Regla práctica",
+    rules: [
+      ["No puedo cerrar:", "tensión, edema, pérdida de pared"],
+      ["No debo cerrar:", "fisiología grave / control de daños"],
+      ["Necesito volver:", "reoperación planificada o second look"]
+    ],
+    startBtn: "Comenzar evaluación ›",
+    yes: "SÍ", no: "NO",
+    progressQ: (i, n) => `Pregunta ${i} de ${n}`,
+    progressBjQ: (i, n) => `Björck · Pregunta ${i} de ${n}`,
+    progressResult: "Resultado",
+    progressBjResult: "Grado de Björck",
+    backPrev: "‹ Corregir respuesta anterior",
+    backLast: "‹ Corregir última respuesta",
+    backToResult: "‹ Volver a la recomendación",
+    redoBjorck: "‹ Rehacer clasificación de Björck",
+    eyebrowResult: "Recomendación",
+    eyebrowBjorck: "Grado orientativo de Björck",
+    bjorckBadge: "Grado de Björck (orientativo)",
+    seeTrigger: "Ver qué lo determinó",
+    hideTrigger: "Ocultar detalle",
+    triggerAnswer: "respuesta",
+    bjorckBtn: "Ver grado orientativo de Björck ›",
+    restartBtn: "Evaluar otro caso",
+    caution: "Grado orientativo según hallazgos referidos. La clasificación definitiva —especialmente en el límite entre grados 2 y 3— requiere inspección directa y puede tener variabilidad interobservador; confirmar en pabellón.",
+    footer: 'Herramienta de apoyo a la decisión clínica — no reemplaza el juicio quirúrgico.<br>EduTrauma® — Enseñando a salvar vidas.',
+    installText: "Instala esta app en tu pantalla de inicio para acceso rápido, incluso sin conexión.",
+    installBtn: "Instalar",
+    installIOS: 'Para instalar: toca <b>Compartir</b> ⬆️ y luego <b>“Agregar a inicio”</b>.',
+    questions: [
+      { category:"Fisiológico", icon:"fisiologico",
+        text:"¿Se requiere descompresión abdominal o existe hipertensión intraabdominal / riesgo de síndrome compartimental abdominal?",
+        yes:{ result:"open", title:"Dejar abdomen abierto + cierre temporal", detail:"La hipertensión intraabdominal o el riesgo de síndrome compartimental contraindica el cierre fascial en este momento." },
+        no:"next" },
+      { category:"Fisiológico", icon:"fisiologico",
+        text:"¿La fisiología permite cirugía definitiva? (Hipotensión, acidosis, coagulopatía, hipotermia, lactato elevado)",
+        yes:"next",
+        no:{ result:"open", title:"Control de daños + dejar abdomen abierto", detail:"El paciente no tolera fisiológicamente una cirugía definitiva. Priorizar control de daños y reevaluación posterior." } },
+      { category:"Anatómico", icon:"anatomico",
+        text:"¿El foco hemorrágico o contaminante está completamente controlado?",
+        yes:"next",
+        no:{ result:"open", title:"Dejar abdomen abierto (recontrol / control del foco)", detail:"Sin control completo del foco, cerrar impediría un recontrol oportuno." } },
+      { category:"Anatómico", icon:"anatomico",
+        text:"¿La perfusión o viabilidad intestinal es incierta?",
+        yes:{ result:"open", title:"Dejar abdomen abierto (second look / reevaluación)", detail:"La viabilidad intestinal incierta requiere una reevaluación programada antes de comprometerse con el cierre." },
+        no:"next" },
+      { category:"Logístico", icon:"logistico",
+        text:"¿Se necesita reoperación planificada? (Packing, second look, anastomosis diferida, reevaluación)",
+        yes:{ result:"open", title:"Dejar abdomen abierto (reoperación planificada)", detail:"Hay una estrategia de reoperación planificada que el cierre fascial dificultaría." },
+        no:"next" },
+      { category:"Anatómico", icon:"anatomico",
+        text:"¿La fascia puede cerrarse sin tensión y sin deterioro ventilatorio o hemodinámico?",
+        yes:{ result:"closed", title:"Cierre fascial primario", detail:"Todos los criterios fisiológicos, anatómicos y logísticos permiten un cierre seguro y definitivo." },
+        no:{ result:"open", title:"Dejar abdomen abierto (edema visceral / cierre inseguro)", detail:"El edema visceral o el riesgo de deterioro ventilatorio/hemodinámico hacen inseguro el cierre en este momento." } }
+    ],
+    bjorck: [
+      { key:"frozen",
+        text:'¿El abdomen está "congelado"? (asas y/o fascia completamente fijas entre sí, sin plano de disección seguro, con o sin fístula)',
+        yesGrade:{ grade:"Grado 4", label:"Abdomen congelado", detail:"Adherencias firmes y difusas impiden separar de forma segura asas y pared. Puede o no coexistir con fístula entérica." } },
+      { key:"fistula",
+        text:"¿Existe una fístula enteroatmosférica? (comunicación entre la luz intestinal y el ambiente, sin cobertura visceral ni de pared)",
+        yesGrade:{ grade:"Grado 3", label:"Fístula enteroatmosférica", detail:"Fístula presente sin la fijación difusa característica del abdomen congelado." } },
+      { key:"fixation", text:"¿Hay fijación en desarrollo del intestino a la pared abdominal o a los canales laterales?" },
+      { key:"contamination", text:"¿La cavidad abdominal está contaminada? (contenido entérico, purulento, o peritonitis significativa)" }
+    ],
+    grades: {
+      g1a:{ grade:"Grado 1A", label:"Limpio, sin fijación", detail:"Cavidad limpia y sin adherencias tempranas de asas a la pared." },
+      g1b:{ grade:"Grado 1B", label:"Contaminado, sin fijación", detail:"Contaminación entérica o purulenta, pero sin adherencias tempranas de asas a la pared." },
+      g2a:{ grade:"Grado 2A", label:"Limpio, con fijación en desarrollo", detail:"Cavidad limpia, con adherencias tempranas de asas a la pared o canales laterales." },
+      g2b:{ grade:"Grado 2B", label:"Contaminado, con fijación en desarrollo", detail:"Contaminación presente junto con adherencias tempranas de asas a la pared o canales laterales." }
+    }
   },
-  {
-    key: "fistula",
-    text: "¿Existe una fístula enteroatmosférica? (comunicación entre la luz intestinal y el ambiente, sin cobertura visceral ni de pared)",
-    yesGrade: { grade: "Grado 3", label: "Fístula enteroatmosférica", detail: "Fístula presente sin la fijación difusa característica del abdomen congelado." }
-  },
-  {
-    key: "fixation",
-    text: "¿Hay fijación en desarrollo del intestino a la pared abdominal o a los canales laterales?"
-  },
-  {
-    key: "contamination",
-    text: "¿La cavidad abdominal está contaminada? (contenido entérico, purulento, o peritonitis significativa)"
-  }
-];
 
+  en: {
+    htmlLang: "en",
+    docTitle: "Leave the abdomen open? — EduTrauma",
+    ribbon: "Clinical Tools",
+    title: "When to leave the abdomen open?",
+    subtitle: "Close whenever it is safe; leave open only if closure increases risk or prevents the therapeutic strategy.",
+    rulesHeading: "Practical rule",
+    rules: [
+      ["I cannot close:", "tension, edema, abdominal wall loss"],
+      ["I should not close:", "severe physiology / damage control"],
+      ["I need to return:", "planned reoperation or second look"]
+    ],
+    startBtn: "Start assessment ›",
+    yes: "YES", no: "NO",
+    progressQ: (i, n) => `Question ${i} of ${n}`,
+    progressBjQ: (i, n) => `Björck · Question ${i} of ${n}`,
+    progressResult: "Result",
+    progressBjResult: "Björck grade",
+    backPrev: "‹ Correct previous answer",
+    backLast: "‹ Correct last answer",
+    backToResult: "‹ Back to recommendation",
+    redoBjorck: "‹ Redo Björck classification",
+    eyebrowResult: "Recommendation",
+    eyebrowBjorck: "Orientative Björck grade",
+    bjorckBadge: "Björck grade (orientative)",
+    seeTrigger: "See what determined it",
+    hideTrigger: "Hide detail",
+    triggerAnswer: "answer",
+    bjorckBtn: "See orientative Björck grade ›",
+    restartBtn: "Assess another case",
+    caution: "Orientative grade based on reported findings. Definitive classification —especially at the grade 2/3 boundary— requires direct inspection and has known interobserver variability; confirm in the operating room.",
+    footer: 'Clinical decision support tool — it does not replace surgical judgment.<br>EduTrauma® — Teaching to save lives.',
+    installText: "Install this app on your home screen for quick access, even offline.",
+    installBtn: "Install",
+    installIOS: 'To install: tap <b>Share</b> ⬆️ then <b>“Add to Home Screen”</b>.',
+    questions: [
+      { category:"Physiological", icon:"fisiologico",
+        text:"Is abdominal decompression required, or is there intra-abdominal hypertension / risk of abdominal compartment syndrome?",
+        yes:{ result:"open", title:"Leave abdomen open + temporary closure", detail:"Intra-abdominal hypertension or the risk of compartment syndrome contraindicates fascial closure at this time." },
+        no:"next" },
+      { category:"Physiological", icon:"fisiologico",
+        text:"Does the physiology allow definitive surgery? (Hypotension, acidosis, coagulopathy, hypothermia, elevated lactate)",
+        yes:"next",
+        no:{ result:"open", title:"Damage control + leave abdomen open", detail:"The patient cannot physiologically tolerate definitive surgery. Prioritize damage control and later reassessment." } },
+      { category:"Anatomical", icon:"anatomico",
+        text:"Is the bleeding or contaminating source completely controlled?",
+        yes:"next",
+        no:{ result:"open", title:"Leave abdomen open (re-look / source control)", detail:"Without complete source control, closure would prevent a timely re-look." } },
+      { category:"Anatomical", icon:"anatomico",
+        text:"Is bowel perfusion or viability uncertain?",
+        yes:{ result:"open", title:"Leave abdomen open (second look / reassessment)", detail:"Uncertain bowel viability requires a planned reassessment before committing to closure." },
+        no:"next" },
+      { category:"Logistical", icon:"logistico",
+        text:"Is a planned reoperation needed? (Packing, second look, deferred anastomosis, reassessment)",
+        yes:{ result:"open", title:"Leave abdomen open (planned reoperation)", detail:"There is a planned reoperation strategy that fascial closure would hinder." },
+        no:"next" },
+      { category:"Anatomical", icon:"anatomico",
+        text:"Can the fascia be closed without tension and without ventilatory or hemodynamic compromise?",
+        yes:{ result:"closed", title:"Primary fascial closure", detail:"All physiological, anatomical and logistical criteria allow a safe, definitive closure." },
+        no:{ result:"open", title:"Leave abdomen open (visceral edema / unsafe closure)", detail:"Visceral edema or the risk of ventilatory/hemodynamic deterioration makes closure unsafe at this time." } }
+    ],
+    bjorck: [
+      { key:"frozen",
+        text:'Is the abdomen "frozen"? (bowel and/or fascia completely fixed together, no safe dissection plane, with or without fistula)',
+        yesGrade:{ grade:"Grade 4", label:"Frozen abdomen", detail:"Firm, diffuse adhesions prevent safe separation of bowel and abdominal wall. An enteric fistula may or may not coexist." } },
+      { key:"fistula",
+        text:"Is there an enteroatmospheric fistula? (communication between the bowel lumen and the environment, without visceral or wall coverage)",
+        yesGrade:{ grade:"Grade 3", label:"Enteroatmospheric fistula", detail:"Fistula present without the diffuse fixation characteristic of a frozen abdomen." } },
+      { key:"fixation", text:"Is the bowel developing fixation to the abdominal wall or the lateral gutters?" },
+      { key:"contamination", text:"Is the abdominal cavity contaminated? (enteric content, purulent material, or significant peritonitis)" }
+    ],
+    grades: {
+      g1a:{ grade:"Grade 1A", label:"Clean, no fixation", detail:"Clean cavity with no early adherence of bowel to the abdominal wall." },
+      g1b:{ grade:"Grade 1B", label:"Contaminated, no fixation", detail:"Enteric or purulent contamination, but no early adherence of bowel to the abdominal wall." },
+      g2a:{ grade:"Grade 2A", label:"Clean, developing fixation", detail:"Clean cavity with early adherence of bowel to the abdominal wall or lateral gutters." },
+      g2b:{ grade:"Grade 2B", label:"Contaminated, developing fixation", detail:"Contamination together with early adherence of bowel to the abdominal wall or lateral gutters." }
+    }
+  },
+
+  pt: {
+    htmlLang: "pt-BR",
+    docTitle: "Deixar o abdome aberto? — EduTrauma",
+    ribbon: "Ferramentas Clínicas",
+    title: "Quando deixar o abdome aberto?",
+    subtitle: "Fechar sempre que for seguro; deixar aberto apenas se o fechamento aumentar o risco ou impedir a estratégia terapêutica.",
+    rulesHeading: "Regra prática",
+    rules: [
+      ["Não posso fechar:", "tensão, edema, perda de parede"],
+      ["Não devo fechar:", "fisiologia grave / controle de danos"],
+      ["Preciso voltar:", "reoperação planejada ou second look"]
+    ],
+    startBtn: "Iniciar avaliação ›",
+    yes: "SIM", no: "NÃO",
+    progressQ: (i, n) => `Pergunta ${i} de ${n}`,
+    progressBjQ: (i, n) => `Björck · Pergunta ${i} de ${n}`,
+    progressResult: "Resultado",
+    progressBjResult: "Grau de Björck",
+    backPrev: "‹ Corrigir resposta anterior",
+    backLast: "‹ Corrigir última resposta",
+    backToResult: "‹ Voltar à recomendação",
+    redoBjorck: "‹ Refazer classificação de Björck",
+    eyebrowResult: "Recomendação",
+    eyebrowBjorck: "Grau orientativo de Björck",
+    bjorckBadge: "Grau de Björck (orientativo)",
+    seeTrigger: "Ver o que determinou",
+    hideTrigger: "Ocultar detalhe",
+    triggerAnswer: "resposta",
+    bjorckBtn: "Ver grau orientativo de Björck ›",
+    restartBtn: "Avaliar outro caso",
+    caution: "Grau orientativo segundo os achados relatados. A classificação definitiva —especialmente no limite entre os graus 2 e 3— exige inspeção direta e pode ter variabilidade interobservador; confirmar no centro cirúrgico.",
+    footer: 'Ferramenta de apoio à decisão clínica — não substitui o julgamento cirúrgico.<br>EduTrauma® — Ensinando a salvar vidas.',
+    installText: "Instale este app na sua tela de início para acesso rápido, mesmo sem conexão.",
+    installBtn: "Instalar",
+    installIOS: 'Para instalar: toque em <b>Compartilhar</b> ⬆️ e depois <b>“Adicionar à Tela de Início”</b>.',
+    questions: [
+      { category:"Fisiológico", icon:"fisiologico",
+        text:"É necessária descompressão abdominal ou existe hipertensão intra-abdominal / risco de síndrome compartimental abdominal?",
+        yes:{ result:"open", title:"Deixar abdome aberto + fechamento temporário", detail:"A hipertensão intra-abdominal ou o risco de síndrome compartimental contraindica o fechamento da fáscia neste momento." },
+        no:"next" },
+      { category:"Fisiológico", icon:"fisiologico",
+        text:"A fisiologia permite cirurgia definitiva? (Hipotensão, acidose, coagulopatia, hipotermia, lactato elevado)",
+        yes:"next",
+        no:{ result:"open", title:"Controle de danos + deixar abdome aberto", detail:"O paciente não tolera fisiologicamente uma cirurgia definitiva. Priorizar o controle de danos e a reavaliação posterior." } },
+      { category:"Anatômico", icon:"anatomico",
+        text:"O foco hemorrágico ou contaminante está completamente controlado?",
+        yes:"next",
+        no:{ result:"open", title:"Deixar abdome aberto (reavaliação / controle do foco)", detail:"Sem o controle completo do foco, fechar impediria um novo controle oportuno." } },
+      { category:"Anatômico", icon:"anatomico",
+        text:"A perfusão ou a viabilidade intestinal é incerta?",
+        yes:{ result:"open", title:"Deixar abdome aberto (second look / reavaliação)", detail:"A viabilidade intestinal incerta exige uma reavaliação programada antes de se comprometer com o fechamento." },
+        no:"next" },
+      { category:"Logístico", icon:"logistico",
+        text:"É necessária reoperação planejada? (Packing, second look, anastomose diferida, reavaliação)",
+        yes:{ result:"open", title:"Deixar abdome aberto (reoperação planejada)", detail:"Há uma estratégia de reoperação planejada que o fechamento da fáscia dificultaria." },
+        no:"next" },
+      { category:"Anatômico", icon:"anatomico",
+        text:"A fáscia pode ser fechada sem tensão e sem deterioração ventilatória ou hemodinâmica?",
+        yes:{ result:"closed", title:"Fechamento primário da fáscia", detail:"Todos os critérios fisiológicos, anatômicos e logísticos permitem um fechamento seguro e definitivo." },
+        no:{ result:"open", title:"Deixar abdome aberto (edema visceral / fechamento inseguro)", detail:"O edema visceral ou o risco de deterioração ventilatória/hemodinâmica torna o fechamento inseguro neste momento." } }
+    ],
+    bjorck: [
+      { key:"frozen",
+        text:'O abdome está "congelado"? (alças e/ou fáscia completamente fixas entre si, sem plano de dissecção seguro, com ou sem fístula)',
+        yesGrade:{ grade:"Grau 4", label:"Abdome congelado", detail:"Aderências firmes e difusas impedem separar com segurança as alças e a parede. Pode ou não coexistir com fístula entérica." } },
+      { key:"fistula",
+        text:"Existe fístula enteroatmosférica? (comunicação entre a luz intestinal e o ambiente, sem cobertura visceral nem de parede)",
+        yesGrade:{ grade:"Grau 3", label:"Fístula enteroatmosférica", detail:"Fístula presente sem a fixação difusa característica do abdome congelado." } },
+      { key:"fixation", text:"Há fixação em desenvolvimento do intestino à parede abdominal ou às goteiras laterais?" },
+      { key:"contamination", text:"A cavidade abdominal está contaminada? (conteúdo entérico, purulento ou peritonite significativa)" }
+    ],
+    grades: {
+      g1a:{ grade:"Grau 1A", label:"Limpo, sem fixação", detail:"Cavidade limpa e sem aderências precoces das alças à parede." },
+      g1b:{ grade:"Grau 1B", label:"Contaminado, sem fixação", detail:"Contaminação entérica ou purulenta, mas sem aderências precoces das alças à parede." },
+      g2a:{ grade:"Grau 2A", label:"Limpo, com fixação em desenvolvimento", detail:"Cavidade limpa, com aderências precoces das alças à parede ou às goteiras laterais." },
+      g2b:{ grade:"Grau 2B", label:"Contaminado, com fixação em desenvolvimento", detail:"Contaminação presente junto com aderências precoces das alças à parede ou às goteiras laterais." }
+    }
+  }
+};
+
+const LANG_NAMES = { es: "Español", en: "English", pt: "Português" };
+
+function detectLang(){
+  const saved = localStorage.getItem('lang');
+  if (saved && I18N[saved]) return saved;
+  const nav = (navigator.language || 'es').toLowerCase();
+  if (nav.startsWith('pt')) return 'pt';
+  if (nav.startsWith('en')) return 'en';
+  return 'es';
+}
+
+let LANG = detectLang();
+function T(){ return I18N[LANG]; }
+
+function setLang(lang){
+  LANG = lang;
+  localStorage.setItem('lang', lang);
+  applyStaticTexts();
+  renderStart();
+}
+
+function applyStaticTexts(){
+  const t = T();
+  document.documentElement.lang = t.htmlLang;
+  document.title = t.docTitle;
+  document.getElementById('brandRibbon').textContent = t.ribbon;
+  document.getElementById('appTitle').textContent = t.title;
+  document.getElementById('appSubtitle').textContent = t.subtitle;
+  document.getElementById('appFooter').innerHTML = t.footer;
+  document.getElementById('installText').innerHTML = t.installText;
+  document.getElementById('installBtn').textContent = t.installBtn;
+}
+
+/* ============ Estado ============ */
 let currentIndex = 0;
 let history = [];
 let bjorckIndex = 0;
@@ -141,15 +349,21 @@ function setFlow(on){
 
 function renderStart(){
   setFlow(false);
+  const t = T();
+  const langBtns = Object.keys(I18N).map(l =>
+    `<button class="${l === LANG ? 'active' : ''}" onclick="setLang('${l}')" aria-pressed="${l === LANG}">${LANG_NAMES[l]}</button>`
+  ).join('');
+  const rules = t.rules.map(r =>
+    `<div class="rule-item"><div class="rule-dot"></div><div><b>${r[0]}</b> ${r[1]}</div></div>`
+  ).join('');
   const main = document.getElementById('main');
   main.innerHTML = `
+    <div class="lang-switch" role="group" aria-label="Idioma / Language">${langBtns}</div>
     <div class="start-rules">
-      <h2>Regla práctica</h2>
-      <div class="rule-item"><div class="rule-dot"></div><div><b>No puedo cerrar:</b> tensión, edema, pérdida de pared</div></div>
-      <div class="rule-item"><div class="rule-dot"></div><div><b>No debo cerrar:</b> fisiología grave / control de daños</div></div>
-      <div class="rule-item"><div class="rule-dot"></div><div><b>Necesito volver:</b> reoperación planificada o second look</div></div>
+      <h2>${t.rulesHeading}</h2>
+      ${rules}
     </div>
-    <button class="start-btn" onclick="startFlow()">Comenzar evaluación ›</button>
+    <button class="start-btn" onclick="startFlow()">${t.startBtn}</button>
   `;
 }
 
@@ -165,23 +379,24 @@ function startFlow(){
 
 function renderQuestion(){
   setFlow(true);
-  const q = QUESTIONS[currentIndex];
-  const total = QUESTIONS.length;
+  const t = T();
+  const q = t.questions[currentIndex];
+  const total = t.questions.length;
   document.getElementById('progressFill').style.width = ((currentIndex)/total*100) + '%';
-  document.getElementById('progressText').textContent = `Pregunta ${currentIndex+1} de ${total}`;
+  document.getElementById('progressText').textContent = t.progressQ(currentIndex+1, total);
   document.getElementById('categoryText').textContent = '';
 
   const main = document.getElementById('main');
   main.innerHTML = `
     <div class="back-row">
-      ${history.length ? `<button class="back-btn" onclick="goBack()">‹ Corregir respuesta anterior</button>` : ''}
+      ${history.length ? `<button class="back-btn" onclick="goBack()">${t.backPrev}</button>` : ''}
     </div>
     <div class="category-badge">${ICONS[q.icon]}<span>${q.category}</span></div>
     <div class="card">
       <div class="question-text">${q.text}</div>
       <div class="answers">
-        <button class="answer-btn no" onclick="answer('no')">NO</button>
-        <button class="answer-btn yes" onclick="answer('yes')">SÍ</button>
+        <button class="answer-btn no" onclick="answer('no')">${t.no}</button>
+        <button class="answer-btn yes" onclick="answer('yes')">${t.yes}</button>
       </div>
     </div>
   `;
@@ -189,8 +404,9 @@ function renderQuestion(){
 
 function renderResult(result){
   window.scrollTo(0, 0);
+  const t = T();
   document.getElementById('progressFill').style.width = '100%';
-  document.getElementById('progressText').textContent = 'Resultado';
+  document.getElementById('progressText').textContent = t.progressResult;
   document.getElementById('categoryText').textContent = '';
 
   const iconOpen = '<svg class="result-icon" viewBox="0 0 24 24" fill="none" stroke="#E02826" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 9l6 6M15 9l-6 6"/></svg>';
@@ -198,25 +414,25 @@ function renderResult(result){
 
   const isOpen = result.result === 'open';
   const triggerLine = history[history.length-1];
-  const triggeringQuestion = QUESTIONS[triggerLine.index];
+  const triggeringQuestion = t.questions[triggerLine.index];
 
   const main = document.getElementById('main');
   main.innerHTML = `
     <div class="back-row">
-      <button class="back-btn" onclick="goBack()">‹ Corregir última respuesta</button>
+      <button class="back-btn" onclick="goBack()">${t.backLast}</button>
     </div>
     <div class="result-card ${isOpen ? 'open' : 'closed'}">
       ${isOpen ? iconOpen : iconClosed}
-      <div class="result-eyebrow">Recomendación</div>
+      <div class="result-eyebrow">${t.eyebrowResult}</div>
       <div class="result-title">${result.title}</div>
       <div class="result-detail">${result.detail}</div>
       <details class="trigger-details">
-        <summary><span class="label-closed">Ver qué lo determinó</span><span class="label-open">Ocultar detalle</span></summary>
-        <div class="trigger-box"><b>${triggeringQuestion.category}</b> — "${triggeringQuestion.text}" → respuesta: <b>${triggerLine.answer === 'yes' ? 'SÍ' : 'NO'}</b></div>
+        <summary><span class="label-closed">${t.seeTrigger}</span><span class="label-open">${t.hideTrigger}</span></summary>
+        <div class="trigger-box"><b>${triggeringQuestion.category}</b> — "${triggeringQuestion.text}" → ${t.triggerAnswer}: <b>${triggerLine.answer === 'yes' ? t.yes : t.no}</b></div>
       </details>
     </div>
-    ${isOpen ? `<button class="secondary-btn" onclick="startBjorck()">Ver grado orientativo de Björck ›</button>` : ''}
-    <button class="restart-btn" onclick="restart()">Evaluar otro caso</button>
+    ${isOpen ? `<button class="secondary-btn" onclick="startBjorck()">${t.bjorckBtn}</button>` : ''}
+    <button class="restart-btn" onclick="restart()">${t.restartBtn}</button>
   `;
 }
 
@@ -229,30 +445,32 @@ function startBjorck(){
 
 function renderBjorckQuestion(){
   window.scrollTo(0, 0);
-  const q = BJORCK_QUESTIONS[bjorckIndex];
-  const total = BJORCK_QUESTIONS.length;
+  const t = T();
+  const q = t.bjorck[bjorckIndex];
+  const total = t.bjorck.length;
   document.getElementById('progressFill').style.width = ((bjorckIndex)/total*100) + '%';
-  document.getElementById('progressText').textContent = `Björck · Pregunta ${bjorckIndex+1} de ${total}`;
+  document.getElementById('progressText').textContent = t.progressBjQ(bjorckIndex+1, total);
   document.getElementById('categoryText').textContent = '';
 
   const main = document.getElementById('main');
   main.innerHTML = `
     <div class="back-row">
-      <button class="back-btn" onclick="bjorckBack()">‹ ${bjorckIndex===0 ? 'Volver a la recomendación' : 'Corregir respuesta anterior'}</button>
+      <button class="back-btn" onclick="bjorckBack()">${bjorckIndex===0 ? t.backToResult : t.backPrev}</button>
     </div>
-    <div class="category-badge bjorck">${ICONS.bjorck}<span>Grado de Björck (orientativo)</span></div>
+    <div class="category-badge bjorck">${ICONS.bjorck}<span>${t.bjorckBadge}</span></div>
     <div class="card">
       <div class="question-text">${q.text}</div>
       <div class="answers">
-        <button class="answer-btn no" onclick="bjorckAnswer('no')">NO</button>
-        <button class="answer-btn yes" onclick="bjorckAnswer('yes')">SÍ</button>
+        <button class="answer-btn no" onclick="bjorckAnswer('no')">${t.no}</button>
+        <button class="answer-btn yes" onclick="bjorckAnswer('yes')">${t.yes}</button>
       </div>
     </div>
   `;
 }
 
 function bjorckAnswer(ans){
-  const q = BJORCK_QUESTIONS[bjorckIndex];
+  const t = T();
+  const q = t.bjorck[bjorckIndex];
   bjorckAnswers[q.key] = ans;
 
   if (q.yesGrade && ans === 'yes'){
@@ -260,18 +478,18 @@ function bjorckAnswer(ans){
     return;
   }
 
-  if (bjorckIndex < BJORCK_QUESTIONS.length - 1){
+  if (bjorckIndex < t.bjorck.length - 1){
     bjorckIndex++;
     renderBjorckQuestion();
   } else {
-    // Reached the end: combine fixation + contamination
+    // Fin: combinar fijación + contaminación
     const fixation = bjorckAnswers.fixation === 'yes';
     const contamination = bjorckAnswers.contamination === 'yes';
     let grade;
-    if (!fixation && !contamination) grade = { grade:"Grado 1A", label:"Limpio, sin fijación", detail:"Cavidad limpia y sin adherencias tempranas de asas a la pared." };
-    else if (!fixation && contamination) grade = { grade:"Grado 1B", label:"Contaminado, sin fijación", detail:"Contaminación entérica o purulenta, pero sin adherencias tempranas de asas a la pared." };
-    else if (fixation && !contamination) grade = { grade:"Grado 2A", label:"Limpio, con fijación en desarrollo", detail:"Cavidad limpia, con adherencias tempranas de asas a la pared o canales laterales." };
-    else grade = { grade:"Grado 2B", label:"Contaminado, con fijación en desarrollo", detail:"Contaminación presente junto con adherencias tempranas de asas a la pared o canales laterales." };
+    if (!fixation && !contamination) grade = t.grades.g1a;
+    else if (!fixation && contamination) grade = t.grades.g1b;
+    else if (fixation && !contamination) grade = t.grades.g2a;
+    else grade = t.grades.g2b;
     renderBjorckResult(grade);
   }
 }
@@ -281,8 +499,6 @@ function bjorckBack(){
     inBjorckFlow = false;
     const last = history[history.length-1];
     renderResult(last.outcome);
-    document.getElementById('progressFill').style.width = '100%';
-    document.getElementById('progressText').textContent = 'Resultado';
     return;
   }
   bjorckIndex--;
@@ -291,28 +507,30 @@ function bjorckBack(){
 
 function renderBjorckResult(grade){
   window.scrollTo(0, 0);
+  const t = T();
   document.getElementById('progressFill').style.width = '100%';
-  document.getElementById('progressText').textContent = 'Grado de Björck';
+  document.getElementById('progressText').textContent = t.progressBjResult;
   document.getElementById('categoryText').textContent = '';
 
   const main = document.getElementById('main');
   main.innerHTML = `
     <div class="back-row">
-      <button class="back-btn" onclick="startBjorck()">‹ Rehacer clasificación de Björck</button>
+      <button class="back-btn" onclick="startBjorck()">${t.redoBjorck}</button>
     </div>
     <div class="result-card bjorck">
-      <div class="result-eyebrow">Grado orientativo de Björck</div>
+      <div class="result-eyebrow">${t.eyebrowBjorck}</div>
       <div class="grade-pill">${grade.grade}</div>
       <div class="result-title" style="font-size:1.05rem;">${grade.label}</div>
       <div class="result-detail">${grade.detail}</div>
-      <div class="caution-box">Grado orientativo según hallazgos referidos. La clasificación definitiva —especialmente en el límite entre grados 2 y 3— requiere inspección directa y puede tener variabilidad interobservador; confirmar en pabellón.</div>
+      <div class="caution-box">${t.caution}</div>
     </div>
-    <button class="restart-btn" onclick="restart()">Evaluar otro caso</button>
+    <button class="restart-btn" onclick="restart()">${t.restartBtn}</button>
   `;
 }
 
 function answer(ans){
-  const q = QUESTIONS[currentIndex];
+  const t = T();
+  const q = t.questions[currentIndex];
   const outcome = q[ans];
   history.push({ index: currentIndex, answer: ans, outcome: outcome !== 'next' ? outcome : null });
 
@@ -341,9 +559,10 @@ function restart(){
   renderStart();
 }
 
+applyStaticTexts();
 renderStart();
 
-// --- PWA install prompt handling (Android/desktop Chrome) ---
+/* ============ PWA ============ */
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
@@ -368,21 +587,20 @@ window.addEventListener('appinstalled', () => {
   document.getElementById('installBanner').classList.remove('show');
 });
 
-// --- iOS "Add to Home Screen" hint (beforeinstallprompt no existe en Safari iOS) ---
+// iOS: no existe beforeinstallprompt — mostrar pista de instalación
 (function(){
   const ua = window.navigator.userAgent;
   const isIOS = /iPhone|iPad|iPod/.test(ua);
   const isStandalone = ('standalone' in window.navigator) && window.navigator.standalone;
   if (isIOS && !isStandalone && localStorage.getItem('installDismissed') !== '1'){
     const banner = document.getElementById('installBanner');
-    document.getElementById('installText').innerHTML =
-      'Para instalar: toca <b>Compartir</b> ⬆️ y luego <b>“Agregar a inicio”</b>.';
-    banner.querySelector('button').style.display = 'none';
+    document.getElementById('installText').innerHTML = T().installIOS;
+    document.getElementById('installBtn').style.display = 'none';
     banner.classList.add('show');
   }
 })();
 
-// --- Service worker registration (no-op on file://, needed when hosted) ---
+// Service worker (requiere https)
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {});
