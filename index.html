@@ -80,7 +80,7 @@
   }
 
   /* Header */
-  header{ text-align:center; padding: 10px 44px 14px; position:relative;}
+  header{ text-align:center; padding: 10px 4px 8px; }
   header h1{
     font-size: 1.28rem;
     line-height:1.25;
@@ -96,19 +96,27 @@
     font-style: italic;
     line-height:1.4;
   }
-  .info-btn{
-    position:absolute;
-    top:10px; right:0;
-    width:34px; height:34px;
-    border-radius:50%;
-    border:1.5px solid var(--line);
-    background:#fff;
-    color:var(--navy);
-    font-weight:800;
-    font-size:0.95rem;
-    display:flex; align-items:center; justify-content:center;
+  .rule-link{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    margin-top:10px;
+    padding:7px 14px;
+    background:none;
+    border:none;
+    border-radius:999px;
+    color:var(--teal);
+    font-family:inherit;
+    font-size:0.84rem;
+    font-weight:600;
+    letter-spacing:0.01em;
     cursor:pointer;
+    -webkit-user-select:none;
+    user-select:none;
+    transition: opacity .15s ease, background .15s ease;
   }
+  .rule-link:active{ opacity:0.55; background:rgba(22,130,158,0.08); }
+  .rule-link svg{ width:17px; height:17px; flex-shrink:0; }
 
   /* Progress */
   .progress-wrap{ margin: 4px 0 18px; }
@@ -370,7 +378,10 @@
   <header>
     <h1>¿Cuándo dejar el abdomen abierto?</h1>
     <p>Cerrar siempre que sea seguro; dejar abierto solo si el cierre aumenta el riesgo o impide la estrategia terapéutica.</p>
-    <button class="info-btn" onclick="toggleSheet(true)" aria-label="Ver regla práctica">i</button>
+    <button class="rule-link" onclick="toggleSheet(true)" aria-label="Ver regla práctica">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="9.25"/><path d="M12 11v5.2"/><circle cx="12" cy="7.6" r="0.5" fill="currentColor" stroke="none"/><circle cx="12" cy="7.6" r="0.9" fill="currentColor" stroke="none"/></svg>
+      Regla práctica
+    </button>
   </header>
 
   <div class="progress-wrap" id="progressWrap">
